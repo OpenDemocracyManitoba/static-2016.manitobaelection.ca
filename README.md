@@ -101,10 +101,10 @@ There were no references to `upcoming.manitobaelection.ca` or `159.203.24.194`.
 |Pattern|Files|What it is|
 |-|-|-|
 |`candidates/<slug>/index.html@page=N.html`|380|candidate news pages 2…N|
-|`index.html@p=N.html`|238|WordPress `/?p=N` shortlinks. Each serves a candidate page directly (canonical `/candidates/<slug>/`).|
+|`index.html@p=N.html`|238|WordPress `/?p=N` shortlinks (post-ID URLs from each page's `<link rel='shortlink'>` tag): 226 candidate pages and 12 site pages, each a duplicate of a page saved at its real path. **Removed in the second commit** (owner decision, 2026-10-24).|
 |`<file>@ver=N`, `<file>@ver=N.css`|10|theme, plugin and core CSS/JS with `?ver=` cache-busters. None has a plain copy beside it.|
 
-**This mapping is temporary.** The next commit runs a transform script, committed in this repo, that turns `@page=N` into `…/page/N/index.html`, strips `?ver=`, and rewrites the matching hrefs. The final mapping is described in this README once that commit is made. `@p=N` shortlink files are left as they are, for the hosting phase to redirect.
+**This mapping is temporary.** The next commit runs a transform script, committed in this repo, that turns `@page=N` into `…/page/N/index.html`, strips `?ver=`, and rewrites the matching hrefs. The final mapping is described in this README once that commit is made. The shortlink duplicates were already deleted in the second commit; the transform also removes the `<link rel='shortlink'>` tag from every page. Nothing is known to link to `/?p=N`; if it's ever needed, the redirects can be rebuilt from the DB dump in the private archive repo.
 
 ## Secret scan
 
