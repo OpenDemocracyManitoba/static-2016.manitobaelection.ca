@@ -2,7 +2,8 @@
 
 Static HTML copy of **2016.manitobaelection.ca**, Open Democracy Manitoba's guide to the 2016 Manitoba provincial election (WordPress 5.9.19, ElectionData theme and plugin). It was crawled from olddroplet (`odm-nginx-ruby-php-2018`, 159.203.24.194) on 2026-10-24, before the server was retired.
 
-* `site/` holds the crawl: 2,512 files, 130 MB.
+* `site/` holds the crawl: 2,276 files, 125 MB, after the clean-up commits described below.
+* `transform.py` is the script that made the third commit (paths for pagination, `?ver=`, shortlinks).
 * `crawl.log.gz` holds both wget logs (pass 1, then the seed pass).
 
 The WordPress source, the DB dump (`mbelection2016`) and the nginx vhost are in the private repo `OpenDemocracyManitoba/archive-2016.manitobaelection.ca`.
@@ -23,6 +24,7 @@ wget --mirror --page-requisites --adjust-extension --restrict-file-names=windows
 2. **Trap cleanup** (see below).
 3. **Seed pass:** 11:17–11:28 CDT. It used the same flags, with `-i seeds.txt` in place of the start URL, and fetched the old-host pages described below.
 4. **Site icon:** `wp-content/uploads/2016/02/cropped-mb_icon-270x270.jpg` was copied in from the source tree. It's referenced only from `<meta name="msapplication-TileImage">`, which wget doesn't follow.
+5. **Two scripts copied from the source tree in the third commit**, for the same reason: `wp-includes/js/wp-emoji-release.min.js` (loaded from inline JS) and `wp-content/themes/ElectionData/js/html5.js` (inside an `<!--[if lt IE 9]>` comment).
 
 There is no `--convert-links`, so the saved HTML keeps its original absolute `https://2016.manitobaelection.ca/…` hrefs.
 
@@ -94,17 +96,32 @@ wget doesn't follow links to another host. So each distinct path was tried on th
 
 There were no references to `upcoming.manitobaelection.ca` or `159.203.24.194`.
 
-## File names with `@` (query strings)
+## Commits and URL mapping
 
-`--restrict-file-names=windows` saves a URL's `?` as `@`, so `/candidates/foo/?page=2` becomes `candidates/foo/index.html@page=2.html`. In this commit:
+The repo has three commits:
 
-|Pattern|Files|What it is|
+1. **Raw crawl.** `--restrict-file-names=windows` saved each URL's `?` as `@`, so `/candidates/foo/?page=2` became `candidates/foo/index.html@page=2.html`. That commit holds 380 `@page=N` files, 238 `@p=N` files and 10 `@ver=` files.
+2. **Shortlink duplicates removed** (owner decision, 2026-10-24). The 238 `index.html@p=N.html` files were WordPress `/?p=N` shortlinks, the post-ID URLs from each page's `<link rel='shortlink'>` tag: 226 candidate pages and 12 site pages, each a duplicate of a page saved at its real path. Nothing is known to link to `/?p=N`. If redirects are ever needed, they can be rebuilt from the DB dump in the private archive repo.
+3. **Path-based URLs** (owner decision, 2026-10-24), made by `python3 -I transform.py 2016.manitobaelection.ca --apply`:
+
+|Old URL (live site)|Crawl file (commit 1)|Now|
 |-|-|-|
-|`candidates/<slug>/index.html@page=N.html`|380|candidate news pages 2…N|
-|`index.html@p=N.html`|238|WordPress `/?p=N` shortlinks (post-ID URLs from each page's `<link rel='shortlink'>` tag): 226 candidate pages and 12 site pages, each a duplicate of a page saved at its real path. **Removed in the second commit** (owner decision, 2026-10-24).|
-|`<file>@ver=N`, `<file>@ver=N.css`|10|theme, plugin and core CSS/JS with `?ver=` cache-busters. None has a plain copy beside it.|
+|`/candidates/<slug>/?page=N#news`|`candidates/<slug>/index.html@page=N.html`|`candidates/<slug>/page/N/index.html` (380 files; 74 candidates)|
+|`/candidates/<slug>/<N>/` (canonical of a paged candidate page)|(crawler trap, not kept)|canonicals now point at `…/page/N/` (380)|
+|`<file>?ver=X`|`<file>@ver=X`, `<file>@ver=X.css`|`<file>` (10 files; no plain copy existed, so nothing was dropped or flagged)|
+|`/?p=N`|`index.html@p=N.html`|removed (commit 2), and the `<link rel='shortlink'>` tag removed from all 620 pages that had one|
 
-**This mapping is temporary.** The next commit runs a transform script, committed in this repo, that turns `@page=N` into `…/page/N/index.html`, strips `?ver=`, and rewrites the matching hrefs. The final mapping is described in this README once that commit is made. The shortlink duplicates were already deleted in the second commit; the transform also removes the `<link rel='shortlink'>` tag from every page. Nothing is known to link to `/?p=N`; if it's ever needed, the redirects can be rebuilt from the DB dump in the private archive repo.
+The transform also rewrote the links in the HTML:
+* 3,356 pager links: `?page=N` → `page/N/`, keeping the `#news` fragment. There were no `?page=1` links; the pager already uses the bare path for page 1.
+* 8,413 `?ver=` query strings were stripped, including the JSON-escaped emoji-loader URL. Only two `?ver=` URLs are left, both on external hosts (Twitter and Google widgets).
+
+The transform only rewrites a link when its new target is in `site/`, and it never overwrites a file. **No `@` files are left.** An internal-link check (every `https://2016.manitobaelection.ca/…` or root-relative `href`/`src`/`content`/`url()` must resolve to a file in `site/`, ignoring the blocked `/wp-json` and `xmlrpc.php` links) finds **0 unresolved out of 147,279**.
+
+**For the hosting phase:** 301 `?page=N` to `…/page/N/` (`N=1` → the bare path), and `/candidates/<slug>/<N>/` to `…/page/N/`. `?ver=` needs no rule, because static assets ignore the query string.
+
+**wget quirk, left as is:** `press-releases.html` and `press-mentions.html` at the root are byte-identical copies of `press-releases/index.html` and `press-mentions/index.html`. Content links to `/press-releases` without a trailing slash, the server 301'd that to the slash form, and wget saved the redirect target under the slashless name.
+
+**Mixed character encoding, as on the live site:** 12 paged news lists (e.g. `parties/pc/page/9/`, `candidates/brian-pallister/page/9/`) contain news excerpts that the ElectionData plugin cut off mid-character, so those files are not valid UTF-8. `grep`/`ugrep` may treat them as binary.
 
 ## Secret scan
 
