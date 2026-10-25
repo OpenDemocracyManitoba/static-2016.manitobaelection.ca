@@ -153,6 +153,18 @@ In Phase B of the olddroplet migration (R3, 2026-10-24), `python3 -I rewrite_lin
 
 Left as they were: 3 in `wp-content/uploads/2016/04/ManitobaElection-2016-PressRelease.pdf` (binary file); 2 in `wp-content/uploads/2016/04/SocialMediaUsage-2016-ODM-PressRelease-.pdf` (binary file).
 
+## Analytics removed
+
+Google Tag Manager / Google Analytics (and the Google Ads tag that rides on `gtag.js`) were removed in Phase B of the olddroplet migration (owner decision D7, 2026-10-24) by `python3 -I strip_analytics.py 2016.manitobaelection.ca --apply`. Files changed: 1,036 HTML files. IDs: `UA-23791334-1`. Each loader went together with its inline block and the comment around it. Other third-party scripts (fonts, embeds, Jetpack stats) were left as they were.
+
+Snippet shapes removed (IDs and whitespace normalised):
+
+* 1,036 ×
+
+  ```html
+  <!-- Global site tag (gtag.js) - Google Analytics --> <script async src="https://www.googletagmanager.com/gtag/js?id=<ID>"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '<ID>'); </script>
+  ```
+
 ## Secret scan
 
 The Phase A §7.2 scan was run over `site/` and found nothing. It checks for:
