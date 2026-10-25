@@ -123,6 +123,36 @@ The transform only rewrites a link when its new target is in `site/`, and it nev
 
 **Mixed character encoding, as on the live site:** 12 paged news lists (e.g. `parties/pc/page/9/`, `candidates/brian-pallister/page/9/`) contain news excerpts that the ElectionData plugin cut off mid-character, so those files are not valid UTF-8. `grep`/`ugrep` may treat them as binary.
 
+## Old-host links rewritten
+
+In Phase B of the olddroplet migration (R3, 2026-10-24), `python3 -I rewrite_links.py 2016.manitobaelection.ca --apply` rewrote 1,293 links in 1,036 files from `http://www.manitobaelection.ca/…` to `https://2016.manitobaelection.ca/…`. Only links whose target is in `site/` were changed:
+
+* `/2016-results/` (2)
+* `/about-us` (1)
+* `/about-us/` (1)
+* `/about-us/bios/` (1)
+* `/candidates/brian-pallister/` (2)
+* `/constituencies/st-boniface-2018-by-election/` (1)
+* `/election-issues/` (3)
+* `/frequently-asked-questions/` (1)
+* `/frequently-asked-questions/#debates` (1)
+* `/frequently-asked-questions/#issues` (1)
+* `/frequently-asked-questions/#news` (226)
+* `/historic-election-result-maps/` (1)
+* `/parties/pc/` (2)
+* `/wp-content/themes/ElectionData/images/mb_leg_og.png` (1,036)
+* `/wp-content/themes/ElectionData/images/twitter_active.jpg` (3)
+* `/wp-content/uploads/2016/03/manitoba_legislature_daryl_sawatzky_small-300x158.png` (1)
+* `/wp-content/uploads/2016/04/LeaderDebate2016.jpg` (1)
+* `/wp-content/uploads/2016/04/ManitobaElection-2016-PressRelease.pdf` (2)
+* `/wp-content/uploads/2016/04/SocialMediaUsage-2016-ODM-PressRelease-.pdf` (2)
+* `/wp-content/uploads/2016/04/odmANDREW01sm-200x300.jpg` (1)
+* `/wp-content/uploads/2016/04/odmKEN01sm-200x300.jpg` (1)
+* `/wp-content/uploads/2016/04/odmKYLE01sm-200x300.jpg` (1)
+* `/wp-content/uploads/2016/04/social_media_infographic_large-598x314.png` (2)
+
+Left as they were: 3 in `wp-content/uploads/2016/04/ManitobaElection-2016-PressRelease.pdf` (binary file); 2 in `wp-content/uploads/2016/04/SocialMediaUsage-2016-ODM-PressRelease-.pdf` (binary file).
+
 ## Secret scan
 
 The Phase A §7.2 scan was run over `site/` and found nothing. It checks for:
